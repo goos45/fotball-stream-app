@@ -3,63 +3,695 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مشاهدة المباريات بدون إعلانات</title>
+    <title>مشاهدة المباريات بدون إعلانات - قنوات متعددة</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; overflow: hidden; height: 100vh; }
-        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 20px; z-index: 100; }
-        .ad-block-notice { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0, 255, 0, 0.2); color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 99; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 100%);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* الهيدر */
+        .header {
+            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 2px solid #00b4d8;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(to right, #00b4db, #0083b0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        
+        .live-badge {
+            display: inline-block;
+            background: #e63946;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        /* تنظيم القنوات */
+        .container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+                gap: 20px;
+            }
+        }
+        
+        /* القائمة الجانبية للقنوات */
+        .channels-sidebar {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 20px;
+            min-width: 280px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (min-width: 768px) {
+            .channels-sidebar {
+                margin-bottom: 0;
+            }
+        }
+        
+        .channels-title {
+            color: #00b4d8;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(0, 180, 216, 0.3);
+            text-align: center;
+        }
+        
+        .channel-list {
+            list-style: none;
+        }
+        
+        .channel-item {
+            background: rgba(255, 255, 255, 0.08);
+            margin-bottom: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+        
+        .channel-item:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateX(-5px);
+            border-color: rgba(0, 180, 216, 0.3);
+        }
+        
+        .channel-item.active {
+            background: rgba(0, 180, 216, 0.2);
+            border-color: #00b4d8;
+        }
+        
+        .channel-btn {
+            width: 100%;
+            padding: 15px;
+            background: none;
+            border: none;
+            color: white;
+            text-align: right;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .channel-number {
+            background: #00b4d8;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        /* مشغل البث */
+        .player-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+        
+        .current-channel {
+            background: linear-gradient(to right, #0d47a1, #1976d2);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .channel-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .quality-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .player-wrapper {
+            position: relative;
+            padding-bottom: 56.25%; /* نسبة 16:9 */
+            height: 0;
+        }
+        
+        .player-iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        /* أدوات التحكم */
+        .controls {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .control-btn {
+            background: #00b4d8;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .control-btn:hover {
+            background: #0093b0;
+            transform: translateY(-2px);
+        }
+        
+        .control-btn.fullscreen {
+            background: #2a9d8f;
+        }
+        
+        .control-btn.refresh {
+            background: #e76f51;
+        }
+        
+        /* معلومات البث */
+        .stream-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border-right: 4px solid #00b4d8;
+        }
+        
+        .info-title {
+            color: #00b4d8;
+            margin-bottom: 10px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 15px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        /* التنبيهات */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2a9d8f;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            animation: fadeIn 0.3s;
+            display: none;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(20px); }
+        }
+        
+        /* للأجهزة المحمولة */
+        @media (max-width: 767px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .current-channel {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            .control-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .channels-sidebar {
+                max-height: 300px;
+                overflow-y: auto;
+            }
+        }
+        
+        /* مؤشر التحميل */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 18px;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
-    <div id="loading">جاري تحميل البث المباشر...</div>
-    <div class="ad-block-notice" id="adBlockNotice">الإعلانات محظورة ✓</div>
+    <!-- الهيدر -->
+    <header class="header">
+        <div class="logo">⚽ بث المباريات المباشر</div>
+        <p>مشاهدة بدون إعلانات - جميع القنوات</p>
+        <div class="live-badge">مباشر ● LIVE</div>
+    </header>
     
-    <iframe 
-        id="streamFrame"
-        src="https://football-stream-hub.blogspot.com/p/player.html?url=https://can2025.aflam4you.net/embed.php?vid=179"
-        style="width:100%; height:100vh; border:none;"
-        allowfullscreen
-        scrolling="no">
-    </iframe>
+    <!-- المحتوى الرئيسي -->
+    <div class="container">
+        <!-- القائمة الجانبية للقنوات -->
+        <aside class="channels-sidebar">
+            <h2 class="channels-title">📺 قائمة القنوات</h2>
+            <ul class="channel-list" id="channelList">
+                <!-- القنوات تضاف ديناميكياً -->
+            </ul>
+            
+            <div style="margin-top: 20px; padding: 15px; background: rgba(0, 180, 216, 0.1); border-radius: 10px;">
+                <p style="color: #00b4d8; font-weight: bold; margin-bottom: 10px;">معلومات:</p>
+                <p style="font-size: 0.9rem; opacity: 0.8;">• انقر على أي قناة للتبديل</p>
+                <p style="font-size: 0.9rem; opacity: 0.8;">• البث يعمل على جميع الأجهزة</p>
+                <p style="font-size: 0.9rem; opacity: 0.8;">• بدون إعلانات مزعجة</p>
+            </div>
+        </aside>
+        
+        <!-- مشغل البث -->
+        <main class="player-container">
+            <!-- معلومات القناة الحالية -->
+            <div class="current-channel">
+                <div class="channel-name" id="currentChannelName">القناة 1</div>
+                <div class="quality-badge">جودة عالية HD</div>
+            </div>
+            
+            <!-- مشغل الفيديو -->
+            <div class="player-wrapper">
+                <div class="loading" id="loadingIndicator">جاري تحميل البث...</div>
+                <iframe 
+                    id="streamPlayer"
+                    class="player-iframe"
+                    allowfullscreen 
+                    scrolling="no"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+                </iframe>
+            </div>
+            
+            <!-- أدوات التحكم -->
+            <div class="controls">
+                <button class="control-btn fullscreen" onclick="toggleFullScreen()">
+                    <span>⛶</span> ملء الشاشة
+                </button>
+                <button class="control-btn refresh" onclick="refreshStream()">
+                    <span>↻</span> إعادة التحميل
+                </button>
+            </div>
+        </main>
+    </div>
+    
+    <!-- معلومات البث -->
+    <div class="container">
+        <div class="stream-info">
+            <h3 class="info-title">معلومات التشغيل</h3>
+            <p>• التطبيق يحظر تلقائياً جميع الإعلانات المزعجة</p>
+            <p>• يمكنك التبديل بين القنوات باستخدام القائمة الجانبية</p>
+            <p>• إذا واجهت مشكلة في قناة، جرب قناة أخرى أو أعد التحميل</p>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div style="font-size: 1.5rem; color: #00b4d8;">4</div>
+                    <div>قنوات متاحة</div>
+                </div>
+                <div class="stat-item">
+                    <div style="font-size: 1.5rem; color: #00b4d8;" id="blockedAds">0</div>
+                    <div>إعلان محظور</div>
+                </div>
+                <div class="stat-item">
+                    <div style="font-size: 1.5rem; color: #00b4d8;" id="streamQuality">HD</div>
+                    <div>جودة البث</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- تنبيهات -->
+    <div class="notification" id="notification"></div>
 
     <script>
+        // بيانات القنوات حسب الترتيب المطلوب
+        const channels = [
+            {
+                id: 1,
+                name: "القناة الرئيسية - كأس الأمم الأفريقية",
+                url: "https://football-stream-hub.blogspot.com/p/player.html?url=https://can2025.aflam4you.net/embed.php?vid=179",
+                quality: "HD"
+            },
+            {
+                id: 2,
+                name: "القناة الثانية - مباريات مباشرة",
+                url: "https://football-stream-hub.blogspot.com/p/player.html?url=https://can2025.aflam4you.net/embed.php?vid=180",
+                quality: "HD"
+            },
+            {
+                id: 3,
+                name: "القناة الثالثة - دوري الأبطال",
+                url: "https://football-stream-hub.blogspot.com/p/player.html?url=https://can2025.aflam4you.net/embed.php?vid=68",
+                quality: "SD"
+            },
+            {
+                id: 4,
+                name: "القناة الرابعة - بث حصري",
+                url: "https://football-stream-hub.blogspot.com/p/player.html?url=https://can2025.aflam4you.net/embed.php?vid=2",
+                quality: "SD"
+            }
+        ];
+
+        // متغيرات التطبيق
+        let currentChannelIndex = 0;
+        let blockedAdsCount = 0;
+
+        // تهيئة التطبيق عند التحميل
         document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 3000);
+            initApp();
+            loadChannel(currentChannelIndex);
+            startAdBlocker();
             
-            const adSelectors = ['[class*="ad"]', '[id*="ad"]', '[class*="banner"]', '.advertisement', '.popup', '.modal'];
+            // إظهار تنبيه ترحيبي
+            setTimeout(() => {
+                showNotification('مرحباً! تم تحميل التطبيق بنجاح');
+            }, 1000);
+        });
+
+        // تهيئة التطبيق
+        function initApp() {
+            const channelList = document.getElementById('channelList');
             
+            // إنشاء قائمة القنوات
+            channels.forEach((channel, index) => {
+                const li = document.createElement('li');
+                li.className = `channel-item ${index === 0 ? 'active' : ''}`;
+                li.innerHTML = `
+                    <button class="channel-btn" onclick="loadChannel(${index})" data-index="${index}">
+                        <span>${channel.name}</span>
+                        <span class="channel-number">${channel.id}</span>
+                    </button>
+                `;
+                channelList.appendChild(li);
+            });
+        }
+
+        // تحميل قناة محددة
+        function loadChannel(index) {
+            if (index < 0 || index >= channels.length) return;
+            
+            // إظهار مؤشر التحميل
+            showLoading();
+            
+            // تحديث الواجهة
+            document.getElementById('currentChannelName').textContent = channels[index].name;
+            document.getElementById('streamQuality').textContent = channels[index].quality;
+            
+            // تحميل البث
+            const player = document.getElementById('streamPlayer');
+            player.src = channels[index].url;
+            
+            // تحديث القائمة النشطة
+            updateActiveChannel(index);
+            
+            // تحديث الفهرس الحالي
+            currentChannelIndex = index;
+            
+            // إظهار تنبيه
+            showNotification(`جاري تحميل: ${channels[index].name}`);
+            
+            // إخفاء مؤشر التحميل بعد 3 ثواني
+            setTimeout(hideLoading, 3000);
+        }
+
+        // إظهار مؤشر التحميل
+        function showLoading() {
+            document.getElementById('loadingIndicator').style.display = 'block';
+        }
+
+        // إخفاء مؤشر التحميل
+        function hideLoading() {
+            document.getElementById('loadingIndicator').style.display = 'none';
+        }
+
+        // تحديث القناة النشطة في القائمة
+        function updateActiveChannel(index) {
+            const channelItems = document.querySelectorAll('.channel-item');
+            channelItems.forEach((item, i) => {
+                if (i === index) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+        }
+
+        // حظر الإعلانات
+        function startAdBlocker() {
+            // قائمة عناصر الإعلانات الشائعة
+            const adSelectors = [
+                '[class*="ad"]', 
+                '[id*="ad"]',
+                '[class*="banner"]',
+                '.advertisement',
+                '.popup',
+                '.modal',
+                'iframe[src*="ads"]',
+                'iframe[src*="doubleclick"]'
+            ];
+            
+            // مراقبة وحظر الإعلانات الجديدة
             const observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
                     mutation.addedNodes.forEach(function(node) {
                         if (node.nodeType === 1) {
                             adSelectors.forEach(selector => {
-                                if (node.matches && node.matches(selector)) { node.style.display = 'none'; }
+                                const elements = node.querySelectorAll ? node.querySelectorAll(selector) : [];
+                                if (node.matches && node.matches(selector)) {
+                                    elements.push(node);
+                                }
+                                
+                                elements.forEach(el => {
+                                    if (el.style.display !== 'none') {
+                                        el.style.display = 'none';
+                                        blockedAdsCount++;
+                                        document.getElementById('blockedAds').textContent = blockedAdsCount;
+                                    }
+                                });
                             });
                         }
                     });
                 });
             });
             
-            observer.observe(document.body, { childList: true, subtree: true });
-            window.alert = function() {};
-            window.open = function() { return null; };
+            // بدء المراقبة
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
             
-            let blockedAds = 0;
+            // منع النوافذ المنبثقة
+            window.alert = function() { 
+                console.log('تم حظر نافذة منبثقة');
+                return false; 
+            };
+            
+            window.open = function() { 
+                console.log('تم حظر فتح نافذة جديدة');
+                return null; 
+            };
+            
+            // حظر الإعلانات الموجودة بالفعل
             setInterval(() => {
-                blockedAds++;
-                document.getElementById('adBlockNotice').textContent = `تم حظر ${blockedAds} إعلان ✓`;
-            }, 10000);
-        });
-        
-        document.addEventListener('click', function(e) {
-            if (e.target.tagName === 'A' && e.target.href) {
-                e.preventDefault();
-                if (e.target.href.includes('embed.php?vid=')) {
-                    document.getElementById('streamFrame').src = e.target.href;
+                adSelectors.forEach(selector => {
+                    document.querySelectorAll(selector).forEach(el => {
+                        if (el.style.display !== 'none') {
+                            el.style.display = 'none';
+                            blockedAdsCount++;
+                            document.getElementById('blockedAds').textContent = blockedAdsCount;
+                        }
+                    });
+                });
+            }, 2000);
+        }
+
+        // التبديل للقناة التالية
+        function nextChannel() {
+            let nextIndex = currentChannelIndex + 1;
+            if (nextIndex >= channels.length) nextIndex = 0;
+            loadChannel(nextIndex);
+        }
+
+        // التبديل للقناة السابقة
+        function prevChannel() {
+            let prevIndex = currentChannelIndex - 1;
+            if (prevIndex < 0) prevIndex = channels.length - 1;
+            loadChannel(prevIndex);
+        }
+
+        // ملء الشاشة
+        function toggleFullScreen() {
+            const playerContainer = document.querySelector('.player-container');
+            
+            if (!document.fullscreenElement) {
+                if (playerContainer.requestFullscreen) {
+                    playerContainer.requestFullscreen();
+                } else if (playerContainer.webkitRequestFullscreen) {
+                    playerContainer.webkitRequestFullscreen();
+                } else if (playerContainer.msRequestFullscreen) {
+                    playerContainer.msRequestFullscreen();
                 }
+                showNotification('وضع ملء الشاشة مفعّل');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                showNotification('وضع ملء الشاشة معطّل');
+            }
+        }
+
+        // إعادة تحميل البث
+        function refreshStream() {
+            const player = document.getElementById('streamPlayer');
+            const currentSrc = player.src;
+            
+            showLoading();
+            player.style.opacity = '0.5';
+            player.src = '';
+            
+            setTimeout(() => {
+                player.src = currentSrc;
+                player.style.opacity = '1';
+                showNotification('تم إعادة تحميل البث بنجاح');
+                setTimeout(hideLoading, 2000);
+            }, 500);
+        }
+
+        // إظهار تنبيه
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.style.display = 'block';
+            notification.style.animation = 'fadeIn 0.3s';
+            
+            // إخفاء التنبيه بعد 3 ثواني
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s';
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 300);
+            }, 3000);
+        }
+
+        // تحديث عداد الإعلانات المحظورة كل 5 ثوان
+        setInterval(() => {
+            document.getElementById('blockedAds').textContent = blockedAdsCount;
+        }, 5000);
+
+        // اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                    nextChannel();
+                    break;
+                case 'ArrowLeft':
+                    prevChannel();
+                    break;
+                case ' ':
+                case 'Spacebar':
+                    e.preventDefault();
+                    refreshStream();
+                    break;
+                case 'f':
+                case 'F':
+                    toggleFullScreen();
+                    break;
             }
         });
+
+        // منع الخروج من التطبيق
+        window.onbeforeunload = function() {
+            return "هل تريد مغادرة التطبيق؟";
+        };
+
+        // مراقبة تحميل الـ iframe
+        document.getElementById('streamPlayer').onload = function() {
+            hideLoading();
+            showNotification('تم تحميل البث بنجاح');
+        };
     </script>
 </body>
 </html>
