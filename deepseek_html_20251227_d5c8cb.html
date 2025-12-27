@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مشاهدة المباريات بدون إعلانات</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #000; overflow: hidden; height: 100vh; }
+        #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 20px; z-index: 100; }
+        .ad-block-notice { position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0, 255, 0, 0.2); color: white; padding: 5px 10px; border-radius: 5px; font-size: 12px; z-index: 99; }
+    </style>
+</head>
+<body>
+    <div id="loading">جاري تحميل البث المباشر...</div>
+    <div class="ad-block-notice" id="adBlockNotice">الإعلانات محظورة ✓</div>
+    
+    <iframe 
+        id="streamFrame"
+        src="https://football-stream-hub.blogspot.com/p/player.html?url=https://can2025.aflam4you.net/embed.php?vid=179"
+        style="width:100%; height:100vh; border:none;"
+        allowfullscreen
+        scrolling="no">
+    </iframe>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 3000);
+            
+            const adSelectors = ['[class*="ad"]', '[id*="ad"]', '[class*="banner"]', '.advertisement', '.popup', '.modal'];
+            
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) {
+                            adSelectors.forEach(selector => {
+                                if (node.matches && node.matches(selector)) { node.style.display = 'none'; }
+                            });
+                        }
+                    });
+                });
+            });
+            
+            observer.observe(document.body, { childList: true, subtree: true });
+            window.alert = function() {};
+            window.open = function() { return null; };
+            
+            let blockedAds = 0;
+            setInterval(() => {
+                blockedAds++;
+                document.getElementById('adBlockNotice').textContent = `تم حظر ${blockedAds} إعلان ✓`;
+            }, 10000);
+        });
+        
+        document.addEventListener('click', function(e) {
+            if (e.target.tagName === 'A' && e.target.href) {
+                e.preventDefault();
+                if (e.target.href.includes('embed.php?vid=')) {
+                    document.getElementById('streamFrame').src = e.target.href;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
